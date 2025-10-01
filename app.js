@@ -35,6 +35,11 @@
 	let activeTimerCategory = null; // key of category used to attribute current run
 	let perCategoryMs = {}; // { [key]: ms }
 
+	function updatePauseButton() {
+		timerPauseBtn.textContent = isRunning ? 'Pause' : 'Continue';
+		timerPauseBtn.title = isRunning ? 'Pause timer' : 'Continue timer';
+	}
+
 	function formatHMS(totalMs) {
 		const totalSeconds = Math.floor(totalMs / 1000);
 		const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
@@ -84,6 +89,7 @@
 		if (timerInterval) clearInterval(timerInterval);
 		timerInterval = setInterval(updateTimerDisplay, 250);
 		updateTimerDisplay();
+		updatePauseButton();
 	}
 
 	function pauseTimer() {
@@ -99,6 +105,7 @@
 		timerStartEpoch = null;
 		if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 		updateTimerDisplay();
+		updatePauseButton();
 	}
 
 	// resetTimer removed
@@ -132,6 +139,7 @@
 				timerInterval = setInterval(updateTimerDisplay, 250);
 			}
 			updateTimerDisplay();
+			updatePauseButton();
 		} catch (_) {}
 	}
 
@@ -148,6 +156,7 @@
 		loadPerCategory();
 		loadTimerState();
 		updateGraph();
+		updatePauseButton();
 	}
 
 	function persist() {
@@ -408,7 +417,7 @@
 
 
 		// Timer controls
-		timerPauseBtn.addEventListener('click', () => pauseTimer());
+		timerPauseBtn.addEventListener('click', () => { if (isRunning) pauseTimer(); else startTimer(); });
 
 		// Config dialog
 		configBtn.addEventListener('click', () => {
