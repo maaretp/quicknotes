@@ -12,6 +12,7 @@
 	const importInput = document.getElementById('importInput');
 	const typeSwitcher = document.getElementById('typeSwitcher');
 	const configBtn = document.getElementById('configBtn');
+	const resetBtn = document.getElementById('resetBtn');
 	const configDialog = document.getElementById('configDialog');
 	const configTextarea = document.getElementById('configTextarea');
 	const configSaveBtn = document.getElementById('configSaveBtn');
@@ -422,6 +423,34 @@
 		});
 		configCancelBtn.addEventListener('click', () => {
 			configDialog.close();
+		});
+
+		// Reset button: confirm and clear timer, notes, and per-category data
+		resetBtn.addEventListener('click', () => {
+			const ok = confirm('Reset will clear elapsed time, per-category time and delete all notes. Are you sure?');
+			if (!ok) return;
+			// Stop timer and clear state
+			if (isRunning) pauseTimer();
+			elapsedMs = 0;
+			timerStartEpoch = null;
+			isRunning = false;
+			updateTimerDisplay();
+			updatePauseButton();
+			// Clear per-category and active category
+			perCategoryMs = {};
+			activeTimerCategory = null;
+			localStorage.removeItem('quicknotes.v1.perCategory');
+			localStorage.removeItem('quicknotes.v1.activeCategory');
+			updateGraph();
+			// Clear notes and draft
+			notes = [];
+			persist();
+			renderNotes();
+			localStorage.removeItem(DRAFT_KEY);
+			noteInput.value = '';
+			// Clear timer persisted state
+			localStorage.removeItem('quicknotes.v1.timer');
+			announce('Reset done');
 		});
 		configSaveBtn.addEventListener('click', (e) => {
 			e.preventDefault();
