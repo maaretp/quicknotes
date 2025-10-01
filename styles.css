@@ -23,7 +23,8 @@ body {
 
 .app { max-width: 900px; margin: 0 auto; padding: 16px; }
 
-.app__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.app__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.app__header > div:first-child { flex: 1 0 100%; }
 .app__title { margin: 0; font-size: 20px; font-weight: 700; }
 .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .app__footer { position: sticky; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 10px 0; }
@@ -64,6 +65,11 @@ body {
 .primary:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 .primary:focus-visible { outline: 3px solid color-mix(in oklab, var(--primary), white 60%); outline-offset: 2px; }
 .status { color: var(--muted); font-size: 12px; }
+
+/* Taglines */
+.tagline { margin: 2px 0 0; color: var(--muted); }
+.tagline--primary { font-weight: 600; color: var(--primary); }
+.tagline--secondary { font-size: 12px; }
 
 .notes__list { list-style: none; padding: 0; margin: 20px 0 120px; display: grid; gap: 10px; }
 .note-item { border: 1px solid var(--border); background: #fff; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; }
