@@ -171,7 +171,11 @@
 				{ key: 'setup', label: 'Setup', color: '#a7f3d0', startsTimer: true, hotkey: 2 },
 				{ key: 'bug', label: 'Bug', color: '#fecaca', startsTimer: true, hotkey: 3 },
 				{ key: 'charter', label: 'Charter', color: '#dbeafe', startsTimer: false, hotkey: 4 },
+				{ key: 'future', label: 'Future', color: '#bae6fd', startsTimer: false },
 				{ key: 'idea', label: 'Idea', color: '#fde68a', startsTimer: false, hotkey: 5 },
+				{ key: 'question', label: 'Question', color: '#fbcfe8', startsTimer: false },
+				{ key: 'automate', label: 'Automate', color: '#e9d5ff', startsTimer: false },
+				{ key: 'document', label: 'Document', color: '#cffafe', startsTimer: false },
 				{ key: 'note', label: 'Note', color: '#fff7ed', startsTimer: false, hotkey: 6 }
 			]
 		};
