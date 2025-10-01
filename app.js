@@ -26,7 +26,6 @@
 
 	let currentType = 'note';
 	let notes = [];
-	let undoStack = [];
 	let showAll = false;
 	let categories = [];
 
@@ -266,21 +265,13 @@
 	function deleteNote(id) {
 		const idx = notes.findIndex(n => n.id === id);
 		if (idx === -1) return;
-		const [removed] = notes.splice(idx, 1);
-		undoStack.push(removed);
+		notes.splice(idx, 1);
 		persist();
 		renderNotes();
-		announce('Deleted. Click Undo to restore.');
+		announce('Deleted');
 	}
 
-	function undoDelete() {
-		const item = undoStack.pop();
-		if (!item) return;
-		notes.unshift(item);
-		persist();
-		renderNotes();
-		announce('Restored');
-	}
+	// Undo functionality removed
 
 	function createNoteElement(note) {
 		const li = document.createElement('li');
@@ -309,15 +300,12 @@
 		editBtn.textContent = 'Edit';
 		const delBtn = document.createElement('button');
 		delBtn.textContent = 'Delete';
-		const undoBtn = document.createElement('button');
-		undoBtn.textContent = 'Undo';
 		actions.appendChild(editBtn);
 		actions.appendChild(delBtn);
-		actions.appendChild(undoBtn);
+
 
 		editBtn.addEventListener('click', () => beginInlineEdit(li, note));
 		delBtn.addEventListener('click', () => deleteNote(note.id));
-		undoBtn.addEventListener('click', () => undoDelete());
 
 		li.appendChild(pill);
 		li.appendChild(content);

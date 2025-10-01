@@ -43,6 +43,10 @@ body {
 
 .io-buttons button, .import-label { border: 1px solid var(--border); background: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
 .import-label { display: inline-block; }
+/* Make Import button text smaller */
+.import-label { font-size: 12px; }
+/* Match Export and Categories button text size */
+.io-buttons button { font-size: 12px; }
 
 .composer { margin-top: 16px; }
 .composer__input {
