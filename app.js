@@ -299,14 +299,10 @@
 		actions.className = 'note-actions';
 		const editBtn = document.createElement('button');
 		editBtn.textContent = 'Edit';
-		const delBtn = document.createElement('button');
-		delBtn.textContent = 'Delete';
 		actions.appendChild(editBtn);
-		actions.appendChild(delBtn);
 
 
 		editBtn.addEventListener('click', () => beginInlineEdit(li, note));
-		delBtn.addEventListener('click', () => deleteNote(note.id));
 
 		li.appendChild(pill);
 		li.appendChild(content);
