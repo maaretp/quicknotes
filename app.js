@@ -19,9 +19,7 @@
 
 	// Timer elements
 	const timerDisplay = document.getElementById('timerDisplay');
-	const timerStartBtn = document.getElementById('timerStartBtn');
 	const timerPauseBtn = document.getElementById('timerPauseBtn');
-	const timerResetBtn = document.getElementById('timerResetBtn');
 	const graphBars = document.getElementById('graphBars');
 
 	let currentType = 'note';
@@ -103,13 +101,7 @@
 		updateTimerDisplay();
 	}
 
-	function resetTimer() {
-		if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-		isRunning = false;
-		elapsedMs = 0;
-		timerStartEpoch = null;
-		updateTimerDisplay();
-	}
+	// resetTimer removed
 
 	function saveTimerState() {
 		const payload = { elapsedMs: elapsedMs + (isRunning && timerStartEpoch ? (Date.now() - timerStartEpoch) : 0), isRunning: isRunning };
@@ -416,9 +408,7 @@
 
 
 		// Timer controls
-		timerStartBtn.addEventListener('click', () => startTimer());
 		timerPauseBtn.addEventListener('click', () => pauseTimer());
-		timerResetBtn.addEventListener('click', () => resetTimer());
 
 		// Config dialog
 		configBtn.addEventListener('click', () => {
