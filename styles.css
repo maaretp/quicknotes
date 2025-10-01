@@ -26,14 +26,19 @@ body {
 .app__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .app__title { margin: 0; font-size: 20px; font-weight: 700; }
 .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.app__footer { position: sticky; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 10px 0; }
+.app__footer .footer__left, .app__footer .footer__right { display: flex; align-items: center; gap: 12px; }
+.app__footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 
-.type-switcher { display: flex; gap: 8px; }
+.type-switcher-wrapper { margin-bottom: 8px; }
+.type-switcher { display: flex; gap: 8px; flex-wrap: wrap; }
 .type-btn { border: 1px solid var(--border); background: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; flex: 1 1 0; text-align: center; }
-.type-btn[data-type="charter"] { background: var(--charter); }
-.type-btn[data-type="idea"] { background: var(--idea); }
-.type-btn[data-type="bug"] { background: var(--bug); }
-.type-btn[data-type="note"] { background: var(--note); }
 .type-btn[aria-pressed="true"] { outline: 2px solid var(--primary); }
+
+/* Visual grouping for timer categories */
+.type-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.type-group + .type-group { margin-left: 12px; padding-left: 12px; border-left: 1px dashed var(--border); }
+.type-group__label { font-size: 12px; color: var(--muted); margin-right: 4px; }
 
 .io-buttons button, .import-label { border: 1px solid var(--border); background: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
 .import-label { display: inline-block; }
@@ -52,6 +57,8 @@ body {
 .composer__input.expanded { min-height: 220px; }
 
 .composer__actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.composer__actions .status { margin-left: 4px; }
+.composer__actions .timer { margin-left: auto; }
 .primary { background: var(--primary); color: #fff; border: none; padding: 10px 16px; font-size: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: transform 0.06s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
 .primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
 .primary:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
@@ -66,10 +73,28 @@ body {
 .note-actions { display: flex; gap: 6px; }
 .note-actions button { border: 1px solid var(--border); background: white; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
 
-/* Pastel mapping */
-.pill-charter { background: var(--charter); }
-.pill-idea { background: var(--idea); }
-.pill-bug { background: var(--bug); }
-.pill-note { background: var(--note); }
+/* Timer */
+.timer { display: flex; align-items: center; gap: 8px; }
+.timer__display { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+.timer__controls button { border: 1px solid var(--border); background: white; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
+
+/* Config dialog */
+#configDialog::backdrop { background: rgba(15, 23, 42, 0.35); }
+#configDialog { border: 1px solid var(--border); border-radius: 12px; padding: 0; }
+.config { padding: 16px; min-width: 520px; }
+.config__title { margin-top: 0; }
+.config__hint { color: var(--muted); font-size: 12px; }
+.config__textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.config__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+
+/* Graph */
+.time-graph { margin-top: 24px; }
+.graph__title { font-size: 16px; margin: 0 0 8px; }
+.graph__bars { display: grid; gap: 8px; }
+.graph__row { display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 8px; }
+.graph__label { color: var(--muted); font-size: 12px; }
+.graph__bar { height: 16px; border-radius: 8px; background: #e5e7eb; position: relative; overflow: hidden; border: 1px solid var(--border); }
+.graph__fill { height: 100%; border-radius: 8px; }
+.graph__value { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
 
 

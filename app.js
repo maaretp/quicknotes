@@ -1,6 +1,7 @@
 (() => {
 	const STORAGE_KEY = 'quicknotes.v1.notes';
 	const DRAFT_KEY = 'quicknotes.v1.draft';
+	const CONFIG_KEY = 'quicknotes.v1.config';
 
 	const noteInput = document.getElementById('noteInput');
 	const saveBtn = document.getElementById('saveBtn');
@@ -9,29 +10,227 @@
 	const notesList = document.getElementById('notesList');
 	const exportBtn = document.getElementById('exportBtn');
 	const importInput = document.getElementById('importInput');
-	const typeButtons = Array.from(document.querySelectorAll('.type-btn'));
+	const typeSwitcher = document.getElementById('typeSwitcher');
+	const configBtn = document.getElementById('configBtn');
+	const configDialog = document.getElementById('configDialog');
+	const configTextarea = document.getElementById('configTextarea');
+	const configSaveBtn = document.getElementById('configSaveBtn');
+	const configCancelBtn = document.getElementById('configCancelBtn');
+
+	// Timer elements
+	const timerDisplay = document.getElementById('timerDisplay');
+	const timerStartBtn = document.getElementById('timerStartBtn');
+	const timerPauseBtn = document.getElementById('timerPauseBtn');
+	const timerResetBtn = document.getElementById('timerResetBtn');
+	const graphBars = document.getElementById('graphBars');
 
 	let currentType = 'note';
 	let notes = [];
 	let undoStack = [];
 	let showAll = false;
+	let categories = [];
+
+	// Timer state
+	let timerInterval = null;
+	let timerStartEpoch = null; // ms timestamp when current run segment started
+	let elapsedMs = 0; // accumulated elapsed time
+	let isRunning = false;
+	let activeTimerCategory = null; // key of category used to attribute current run
+	let perCategoryMs = {}; // { [key]: ms }
+
+	function formatHMS(totalMs) {
+		const totalSeconds = Math.floor(totalMs / 1000);
+		const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+		const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+		const s = String(totalSeconds % 60).padStart(2, '0');
+		return `${h}:${m}:${s}`;
+	}
+
+	function updateTimerDisplay() {
+		const base = elapsedMs + (isRunning && timerStartEpoch ? (Date.now() - timerStartEpoch) : 0);
+		timerDisplay.textContent = formatHMS(base);
+	}
+
+	function updateGraph() {
+		// Build list of timer categories only
+		const timerCats = categories.filter(c => c.startsTimer);
+		const data = timerCats.map(c => ({ key: c.key, label: c.label, color: c.color, ms: Number(perCategoryMs[c.key] || 0) }));
+		const max = Math.max(1, ...data.map(d => d.ms));
+		graphBars.innerHTML = '';
+		data.forEach(d => {
+			const row = document.createElement('div');
+			row.className = 'graph__row';
+			const label = document.createElement('div');
+			label.className = 'graph__label';
+			label.textContent = d.label;
+			const bar = document.createElement('div');
+			bar.className = 'graph__bar';
+			const fill = document.createElement('div');
+			fill.className = 'graph__fill';
+			fill.style.width = `${Math.round((d.ms / max) * 100)}%`;
+			fill.style.background = d.color;
+			bar.appendChild(fill);
+			const value = document.createElement('div');
+			value.className = 'graph__value';
+			value.textContent = formatHMS(d.ms);
+			row.appendChild(label);
+			row.appendChild(bar);
+			row.appendChild(value);
+			graphBars.appendChild(row);
+		});
+	}
+
+	function startTimer() {
+		if (isRunning) return;
+		isRunning = true;
+		timerStartEpoch = Date.now();
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = setInterval(updateTimerDisplay, 250);
+		updateTimerDisplay();
+	}
+
+	function pauseTimer() {
+		if (!isRunning) return;
+		const delta = Date.now() - (timerStartEpoch || Date.now());
+		elapsedMs += delta;
+		if (activeTimerCategory) {
+			perCategoryMs[activeTimerCategory] = (perCategoryMs[activeTimerCategory] || 0) + delta;
+			savePerCategory();
+			updateGraph();
+		}
+		isRunning = false;
+		timerStartEpoch = null;
+		if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+		updateTimerDisplay();
+	}
+
+	function resetTimer() {
+		if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+		isRunning = false;
+		elapsedMs = 0;
+		timerStartEpoch = null;
+		updateTimerDisplay();
+	}
+
+	function saveTimerState() {
+		const payload = { elapsedMs: elapsedMs + (isRunning && timerStartEpoch ? (Date.now() - timerStartEpoch) : 0), isRunning: isRunning };
+		localStorage.setItem('quicknotes.v1.timer', JSON.stringify(payload));
+	}
+	function savePerCategory() {
+		localStorage.setItem('quicknotes.v1.perCategory', JSON.stringify(perCategoryMs));
+		localStorage.setItem('quicknotes.v1.activeCategory', activeTimerCategory || '');
+	}
+
+	function loadPerCategory() {
+		try {
+			perCategoryMs = JSON.parse(localStorage.getItem('quicknotes.v1.perCategory') || '{}');
+		} catch (_) { perCategoryMs = {}; }
+		activeTimerCategory = localStorage.getItem('quicknotes.v1.activeCategory') || null;
+	}
+
+	function loadTimerState() {
+		try {
+			const raw = localStorage.getItem('quicknotes.v1.timer');
+			if (!raw) return;
+			const state = JSON.parse(raw);
+			elapsedMs = Number(state.elapsedMs) || 0;
+			if (state.isRunning) {
+				// Resume as running from now (not exact persistence but good UX)
+				isRunning = true;
+				timerStartEpoch = Date.now();
+				timerInterval = setInterval(updateTimerDisplay, 250);
+			}
+			updateTimerDisplay();
+		} catch (_) {}
+	}
+
+	window.addEventListener('beforeunload', saveTimerState);
 
 	function load() {
 		try {
 			notes = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 		} catch (_) { notes = []; }
+		loadConfig();
 		renderNotes();
 		noteInput.value = localStorage.getItem(DRAFT_KEY) || '';
-		setType(localStorage.getItem('quicknotes.v1.type') || 'note');
+		setType(localStorage.getItem('quicknotes.v1.type') || (categories[0]?.key || 'note'));
+		loadPerCategory();
+		loadTimerState();
+		updateGraph();
 	}
 
 	function persist() {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
 	}
 
+	function defaultConfig() {
+		return {
+			version: 1,
+			categories: [
+				{ key: 'test', label: 'Test', color: '#d8b4fe', startsTimer: true, hotkey: 1 },
+				{ key: 'setup', label: 'Setup', color: '#a7f3d0', startsTimer: true, hotkey: 2 },
+				{ key: 'bug', label: 'Bug', color: '#fecaca', startsTimer: true, hotkey: 3 },
+				{ key: 'charter', label: 'Charter', color: '#dbeafe', startsTimer: false, hotkey: 4 },
+				{ key: 'idea', label: 'Idea', color: '#fde68a', startsTimer: false, hotkey: 5 },
+				{ key: 'note', label: 'Note', color: '#fff7ed', startsTimer: false, hotkey: 6 }
+			]
+		};
+	}
+
+	function loadConfig() {
+		try {
+			const raw = localStorage.getItem(CONFIG_KEY);
+			const conf = raw ? JSON.parse(raw) : defaultConfig();
+			if (!Array.isArray(conf.categories)) throw new Error('Invalid config');
+			categories = conf.categories;
+		} catch (_) {
+			categories = defaultConfig().categories;
+		}
+		renderTypeButtons();
+	}
+
+	function saveConfig() {
+		const conf = { version: 1, categories };
+		localStorage.setItem(CONFIG_KEY, JSON.stringify(conf));
+	}
+
+	function renderTypeButtons() {
+		typeSwitcher.innerHTML = '';
+		const timers = categories.filter(c => c.startsTimer);
+		const nonTimers = categories.filter(c => !c.startsTimer);
+
+		const makeGroup = (label, items) => {
+			const group = document.createElement('div');
+			group.className = 'type-group';
+			const groupLabel = document.createElement('span');
+			groupLabel.className = 'type-group__label';
+			groupLabel.textContent = label;
+			group.appendChild(groupLabel);
+			items.forEach(cat => {
+				const btn = document.createElement('button');
+				btn.className = 'type-btn';
+				btn.dataset.type = cat.key;
+				btn.setAttribute('aria-pressed', String(cat.key === currentType));
+				btn.title = `${cat.label}${cat.hotkey ? ` (${cat.hotkey})` : ''}`;
+				btn.textContent = cat.label;
+				btn.style.background = cat.color;
+				btn.addEventListener('click', () => setType(cat.key));
+				group.appendChild(btn);
+			});
+			return group;
+		};
+
+		if (timers.length) typeSwitcher.appendChild(makeGroup('Timer', timers));
+		if (nonTimers.length) typeSwitcher.appendChild(makeGroup('Other', nonTimers));
+	}
+
+	function getCategoryByKey(key) {
+		return categories.find(c => c.key === key);
+	}
+
 	function setType(type) {
 		currentType = type;
-		typeButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
+		Array.from(typeSwitcher.querySelectorAll('.type-btn')).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
 		localStorage.setItem('quicknotes.v1.type', type);
 	}
 
@@ -43,6 +242,13 @@
 		persist();
 		renderNotes();
 		announce('Saved');
+		const cat = getCategoryByKey(note.type);
+		if (cat && cat.startsTimer) {
+			if (isRunning) pauseTimer();
+			activeTimerCategory = cat.key;
+			savePerCategory();
+			startTimer();
+		}
 	}
 
 	function updateNote(id, newText) {
@@ -78,8 +284,10 @@
 		li.dataset.id = note.id;
 
 		const pill = document.createElement('span');
-		pill.className = `note-pill pill-${note.type}`;
-		pill.textContent = note.type;
+		pill.className = 'note-pill';
+		pill.textContent = (getCategoryByKey(note.type)?.label || note.type);
+		const color = getCategoryByKey(note.type)?.color;
+		if (color) pill.style.background = color;
 
 		const content = document.createElement('div');
 		const textEl = document.createElement('div');
@@ -214,14 +422,48 @@
 			announce(noteInput.classList.contains('expanded') ? 'Expanded' : 'Collapsed');
 		});
 
-		typeButtons.forEach(btn => btn.addEventListener('click', () => setType(btn.dataset.type)));
+
+		// Timer controls
+		timerStartBtn.addEventListener('click', () => startTimer());
+		timerPauseBtn.addEventListener('click', () => pauseTimer());
+		timerResetBtn.addEventListener('click', () => resetTimer());
+
+		// Config dialog
+		configBtn.addEventListener('click', () => {
+			configTextarea.value = JSON.stringify({ categories }, null, 2);
+			configDialog.showModal();
+		});
+		configCancelBtn.addEventListener('click', () => {
+			configDialog.close();
+		});
+		configSaveBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			try {
+				const parsed = JSON.parse(configTextarea.value);
+				if (!parsed || !Array.isArray(parsed.categories)) throw new Error('Invalid format');
+				categories = parsed.categories;
+				saveConfig();
+				renderTypeButtons();
+				announce('Categories saved');
+				configDialog.close();
+			} catch (_) {
+				announce('Invalid categories JSON');
+			}
+		});
 
 		document.addEventListener('keydown', (e) => {
 			if (e.target instanceof HTMLTextAreaElement) return;
-			if (e.key === '1') setType('charter');
-			if (e.key === '2') setType('idea');
-			if (e.key === '3') setType('bug');
-			if (e.key === '4') setType('note');
+			// Hotkeys for categories (number keys)
+			if (/^[0-9]$/.test(e.key)) {
+				const num = Number(e.key);
+				const match = categories.find(c => c.hotkey === num);
+				if (match) setType(match.key);
+			}
+		// Space toggles pause/resume when not in textarea
+			if (e.code === 'Space') {
+				e.preventDefault();
+				if (isRunning) pauseTimer(); else startTimer();
+			}
 		});
 
 		exportBtn.addEventListener('click', () => {

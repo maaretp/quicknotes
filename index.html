@@ -10,36 +10,66 @@
 	<div class="app">
 		<header class="app__header">
 			<h1 class="app__title">QuickNotes</h1>
-			<div class="controls">
-				<div class="type-switcher" role="radiogroup" aria-label="Note type">
-					<button class="type-btn" data-type="charter" aria-pressed="false" title="Charter (1)">Charter</button>
-					<button class="type-btn" data-type="idea" aria-pressed="false" title="Idea (2)">Idea</button>
-					<button class="type-btn" data-type="bug" aria-pressed="false" title="Bug (3)">Bug</button>
-					<button class="type-btn" data-type="note" aria-pressed="false" title="Note (4)">Note</button>
-				</div>
-				<div class="io-buttons">
-					<button id="exportBtn" title="Export notes to JSON">Export</button>
-					<label class="import-label" for="importInput">Import</label>
-					<input id="importInput" type="file" accept="application/json" hidden>
-				</div>
-			</div>
+			<div class="controls"></div>
 		</header>
 
 		<main>
 			<section class="composer" aria-label="Composer">
+				<div class="type-switcher-wrapper">
+					<div id="typeSwitcher" class="type-switcher" role="radiogroup" aria-label="Note type"></div>
+				</div>
 				<textarea id="noteInput" class="composer__input" placeholder="Type your note… Enter to save. Cmd+Enter to expand." rows="3"></textarea>
 				<div class="composer__actions">
 					<button id="saveBtn" class="primary">Save (Enter)</button>
 					<button id="expandBtn" title="Toggle expand (Cmd+Enter)">Expand</button>
 					<span id="status" aria-live="polite" class="status"></span>
+					<div class="timer">
+						<span id="timerDisplay" class="timer__display" aria-live="polite">00:00:00</span>
+						<div class="timer__controls">
+							<button id="timerStartBtn" title="Start timer">Start</button>
+							<button id="timerPauseBtn" title="Pause timer">Pause</button>
+							<button id="timerResetBtn" title="Reset timer">Reset</button>
+						</div>
+					</div>
 				</div>
 			</section>
 
 			<section class="notes" aria-label="Notes list">
 				<ul id="notesList" class="notes__list"></ul>
 			</section>
+
+			<section class="time-graph" aria-label="Time graph">
+				<h2 class="graph__title">Time by category</h2>
+				<div id="graphBars" class="graph__bars"></div>
+			</section>
 		</main>
+
+		<footer class="app__footer" aria-label="Secondary controls">
+			<div class="footer__left">
+				<!-- Timer moved above under the text field -->
+			</div>
+			<div class="footer__right">
+				<div class="io-buttons">
+					<button id="exportBtn" title="Export notes to JSON">Export</button>
+					<label class="import-label" for="importInput">Import</label>
+					<input id="importInput" type="file" accept="application/json" hidden>
+					<button id="configBtn" title="Configure categories">Categories</button>
+				</div>
+			</div>
+		</footer>
 	</div>
+
+	<dialog id="configDialog">
+		<form method="dialog" class="config">
+			<h2 class="config__title">Categories configuration</h2>
+			<p class="config__hint">Edit categories JSON below. Example item: { "key": "test", "label": "Test", "color": "#d8b4fe", "startsTimer": true, "hotkey": 1 }</p>
+			<textarea id="configTextarea" class="config__textarea" rows="12"></textarea>
+			<div class="config__actions">
+				<button id="configSaveBtn" class="primary" value="save">Save</button>
+				<button id="configCancelBtn" value="cancel">Cancel</button>
+			</div>
+		</form>
+	</dialog>
 
 	<script src="./app.js"></script>
 </body>
